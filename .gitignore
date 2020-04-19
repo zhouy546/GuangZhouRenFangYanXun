@@ -9,6 +9,10 @@
 /[Bb]uilds/
 /[Ll]ogs/
 /[Mm]emoryCaptures/
+Assets/StreamingAssets/
+Assets/StreamingAssets*
+Assets/AssetStoreTools*
+Assets/AmplifyShaderEditor/Examples*
 
 # Never ignore Asset meta data
 !/[Aa]ssets/**/*.meta
