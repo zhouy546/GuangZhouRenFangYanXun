@@ -7,14 +7,21 @@ using UnityEngine.UI;
 public class Player : NetworkBehaviour
 {
 
+    public List<GameObject> YanXungameObjects = new List<GameObject>();
+
+
+//isServer获得的是这个软件当前是否是服务器,
+    public bool AmILocalPlayer = false;
+
+    [SyncVar]
     public int currentID = 15;
+    [SyncVar]
     public bool isLocked = false;
+
     public List<Button> buttons = new List<Button>();
 
-    private bool isServerIni = false;
-    //同步变量还可以指定函数，使用hook;
-    //当服务器改变了playerHP的值，客户端会调用ChangHP这个函数
-    //这个值是以服务器为准。就算客户端改变了，服务器改变之后，客户端还是显示服务器的数据
+    public bool isServerIni = false;
+
     //[SyncVar]
     //public State _State;
 
@@ -23,6 +30,7 @@ public class Player : NetworkBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        AmILocalPlayer = isLocalPlayer;
          StartCoroutine( initi());
     }
 
@@ -30,19 +38,34 @@ public class Player : NetworkBehaviour
 
     public IEnumerator initi()
     {
-        Debug.Log("我是不是服务器" + isServer);
+
         // clientSetState(State.DefautState);
+
         yield return new WaitForSeconds(0.5F);
+        Debug.Log("我是不是服务器" + isServer);
         if (isServer&&isLocalPlayer)
         {
             ServerSetState(State.DefautState);
             Debug.Log("服务器设置状态");
+            isServerIni = true;
         }
         else
         {
             Debug.Log("客户端设置状态");
             ClientSetState();
         }
+        //registerCha
+        if (isServer) {
+            GameManager.instance.IniCharacter(0, false, this.name, YanYun.DefaultState);
+            Debug.Log("-------------------添加玩家进入syncCharacter---------------------");
+
+        }
+
+    }
+
+    private void OnDestroy()
+    {
+        GameManager.instance.syncCharacter.Remove(GameManager.instance.getCharacterByName(this.name));
     }
 
     //用户界面手点击选着角色后高亮并且更新当前ID
@@ -54,16 +77,18 @@ public class Player : NetworkBehaviour
     public void setLocalID_Locked(bool b,int id) {
         currentID = id;
         isLocked = b;
+
     }
 
 
     public void BtnSentSelectMsgToServer()
     {
-        if (currentID >= 15)
+        if (currentID >=GameManager.MAXPLAYER)
         {
             return;
         }
-        CmdchangeSyncList(currentID);
+        Debug.Log("客户端按钮ID" + currentID);
+        CmdchangeSyncList(currentID,this.name);
     }
 
     public void DisableBtn(int num)
@@ -75,9 +100,9 @@ public class Player : NetworkBehaviour
 
     //选定角色
     [Command]
-    public void CmdchangeSyncList(int id)
+    public void CmdchangeSyncList(int id,string _PlayerName)
     {
-        if (!GameManager.instance.syncCharacter[id].isLocked)//未锁
+        if (!GameManager.instance.getCharacterByName(_PlayerName).isLocked)//未锁
         {
             if (!isLocked)
             {
@@ -85,16 +110,24 @@ public class Player : NetworkBehaviour
                 GameManager.characters temp = new GameManager.characters();
                 temp.id = id;
                 temp.isLocked = true;//一旦进入，服务器必定锁住
+                temp.M_name = _PlayerName;
+                //设定角色进入到某个状态
+                temp.YanYunState = YanYun.ZuZhangAlertState;
+                int index = GameManager.instance.syncCharacter.IndexOf(GameManager.instance.getCharacterByName(_PlayerName));
+                GameManager.instance.syncCharacter[index] = temp;
 
-                GameManager.instance.syncCharacter[id] = temp;
                 setLocalID_Locked(true, id);
-
-                ServerChageSyncList(temp);
+                Debug.Log("传入的数值"+id);
+                Debug.Log(_PlayerName + "按按钮玩家名字---------------");
+                Debug.Log(GameManager.instance.getCharacterByName(_PlayerName).M_name + "Structure中名字---------------");
+                Debug.Log(GameManager.instance.getCharacterByName(_PlayerName).YanYunState + "Structure中状态---------------");
+                Debug.Log(GameManager.instance.getCharacterByName(_PlayerName).id+"按钮后玩家选中按钮ID---------------");
+                ServerChageSyncList( GameManager.instance.getCharacterByName(_PlayerName));
             }
         }
         else
         {
-            setLocalID_Locked(false, 15);
+            setLocalID_Locked(false, GameManager.MAXPLAYER);
         }
     }
     //改变服务器上按钮
@@ -113,10 +146,17 @@ public class Player : NetworkBehaviour
     [ClientRpc]
     public void RpcChangeSyncList(GameManager.characters temp)
     {
+
+        //找到本地玩家，更新本地玩家UI; 不更新远程玩家UI
+
+        Player tempPlayer = GameManager.GetCurrentLocalPlayer();
         foreach (Player player in GameManager.players.Values)
         {
             player.DisableBtn(temp.id);//关闭所有服务器上Client的按钮
         }
+        Texture2D tempTexture2D = GameManager.PlayerName_PlayerInfo_KP[temp.M_name].TextureIDPhoto;
+        tempPlayer.buttons[temp.id].GetComponent<Image>().sprite = GameManager.Texture2DtoSprite(tempTexture2D);
+
     }
 
     [Client]

@@ -13,8 +13,9 @@
 
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Networking;
 
-public class DealWithUDPMessage : MonoBehaviour
+public class DealWithUDPMessage : NetworkBehaviour
 {
 
 
@@ -33,6 +34,7 @@ public class DealWithUDPMessage : MonoBehaviour
     /// 消息处理
     /// </summary>
     /// <param name="_data"></param>
+    [Server]
     public void MessageManage(string _data)
     {
 
@@ -61,7 +63,7 @@ public class DealWithUDPMessage : MonoBehaviour
         }
 
     }
- 
+ [Server]
     public void PlayerChangeState(State _num)
     {
         GameManager.GetServerPlayer().ServerSetState(_num);
@@ -71,7 +73,7 @@ public class DealWithUDPMessage : MonoBehaviour
     {
 
     }
-
+    
     public IEnumerator Initialization() {
         if (instance == null)
         {

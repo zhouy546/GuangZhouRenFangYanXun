@@ -17,10 +17,10 @@ using System.Text;
 using System.Threading;
 using UnityEngine.Networking;
 
-public class GetUDPMessage: MonoBehaviour
+public class GetUDPMessage: NetworkBehaviour
 {
     public static GetUDPMessage instance;
-    private bool isIni = false;
+
     [Tooltip("消息处理类")] public DealWithUDPMessage m_messageManage;
     [Tooltip("接受端口号")] public static int m_ReceivePort = 29010;
 
@@ -34,9 +34,10 @@ public class GetUDPMessage: MonoBehaviour
     /// <summary>
     /// 设置网络
     /// </summary>
+    [Server]
     void Start()
     {
-
+        Debug.Log("在服务器上开启UDP接收");
         instance = this;
         InitializationUdp();
     }
@@ -49,7 +50,7 @@ public class GetUDPMessage: MonoBehaviour
         m_newsock.Bind(m_ip);//绑定IP
         test = new Thread(BeginListening);//定义一个子线程
         test.Start();//子线程开始
-        isIni = true;
+
     }
 
     public void StopUdp() {
@@ -60,12 +61,9 @@ public class GetUDPMessage: MonoBehaviour
 	/// <summary>
 	/// 更新
 	/// </summary>
+    [Server]
     void Update()
     {
-        if (isIni)
-        {
-
-
             //Debug.Log("read MESSAGE");
 
             //Debug.Log("GetUPDMessage.cs:");
@@ -83,7 +81,6 @@ public class GetUDPMessage: MonoBehaviour
             //Debug.Log(m_array_data.Count + "+" + m_array_data.Capacity);
             m_array_data.Clear();//此步为了让集合的容量跟着清空
 
-        }
     }
 	/// <summary>
 	/// 线程接受
@@ -105,6 +102,8 @@ public class GetUDPMessage: MonoBehaviour
 	/// <summary>
 	/// 退出后关闭网络
 	/// </summary>
+    /// 
+    [Server]
     void OnApplicationQuit()
     {
         if (test != null) {

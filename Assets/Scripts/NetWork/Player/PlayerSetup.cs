@@ -19,16 +19,23 @@ public class PlayerSetup : NetworkBehaviour
             {
                 componentsToDisable[i].enabled = false;
             }
+
+           // GameManager.instance.IniCharacter(0, false, this.name, YanYun.DefaultState);
+
         }
         else
         {
-
             if (isServer)//打开场景内摄像机
             {
+
+
+
                 for (int i = 0; i < componentsToDisable.Length; i++)
                 {
                     componentsToDisable[i].enabled = false;
                 }
+
+                ServerCanvasCtr.instance.RegisterServerGuiEvent();
             }
             else//如果是客户端关闭场景摄像机打开自己Player下的摄像机，
             {
@@ -37,13 +44,20 @@ public class PlayerSetup : NetworkBehaviour
                 {
                     sceneCamera.gameObject.SetActive(false);
                 }
+
+
+                Player _player = GetComponent<Player>();
+                Debug.Log(_player.isLocalPlayer);
+                if (_player.isLocalPlayer)
+                {
+                    AddClientEvent();
+                }
+
             }
-
-
-
         }
 
- 
+
+
 
     }
 
@@ -53,14 +67,42 @@ public class PlayerSetup : NetworkBehaviour
 
         string _netID = GetComponent<NetworkIdentity>().netId.ToString();
         Player _player = GetComponent<Player>();
+
+
+
         GameManager.RegisterPlayer(_netID, _player);
+
+        //初始化信息
+        GameManager.RegisterPhotoID(_netID);
+
+
+    }
+
+    void AddClientEvent()
+    {
+
+        Debug.Log(GameManager.GetCurrentLocalPlayer().name);
+
+       GameManager.GetCurrentLocalPlayer().canvasCtr.RegisterClientGuiEvent();
+
+    }
+
+    void RemoveClientListener()
+    {
+        GameManager.GetCurrentLocalPlayer().canvasCtr.UnRegisterClientGuiEvent();
     }
 
 
     public override void OnStartServer()
     {
         base.OnStartServer();
+        Debug.Log("服务开始");
+    }
 
+    public override void OnNetworkDestroy()
+    {
+        base.OnNetworkDestroy();
+        
 
     }
 
@@ -73,12 +115,32 @@ public class PlayerSetup : NetworkBehaviour
 
     private void OnDisable()
     {
+        Player _player = GetComponent<Player>();
+        Debug.Log(_player.isLocalPlayer);
+        if (_player.isLocalPlayer)
+        {
+            RemoveClientListener();
+        }
+
+
+        if (_player.isLocalPlayer && _player.isServerIni)
+        {
+            ServerCanvasCtr.instance.UnRegisterServerGuiEvent();
+        }
+
+
         if (sceneCamera != null)
         {
             sceneCamera.gameObject.SetActive(true);
 
         }
 
+
+
         GameManager.UnRegisterPlayer(transform.name);
+        GameManager.UnRegisterPhotoID(transform.name);
+
+
+
     }
 }

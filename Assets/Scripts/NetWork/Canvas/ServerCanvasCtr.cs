@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 
-public class ServerCanvasCtr : MonoBehaviour
+public class ServerCanvasCtr :MonoBehaviour 
 {
     public static List<GameObject> Sections = new List<GameObject>();
     public GameObject G_defalut;
@@ -13,6 +14,9 @@ public class ServerCanvasCtr : MonoBehaviour
 
     public static ServerCanvasCtr instance;
     public List<Button> Characterbuttons = new List<Button>();
+
+    public static YanYun ServerYanYunState = YanYun.DefaultState;
+
     public void Awake()
     {
         instance = this;
@@ -21,6 +25,25 @@ public class ServerCanvasCtr : MonoBehaviour
         Sections.Add(G_VideoPlayState);
         Sections.Add(G_YanXunState);
         Sections.Add(G_QAState);
+    }
+
+
+    public  void RegisterServerGuiEvent()
+    {
+
+
+            Debug.Log("本地Player是服务器 所以添加服务器事件");
+            EventCenter.AddListener(EventDefine.OnYanYunStart, funYanYunStart);
+
+    }
+
+    public  void UnRegisterServerGuiEvent()
+    {
+
+        Debug.Log("本地Player是服务器 所以移除服务器事件");
+
+        EventCenter.RemoveListener(EventDefine.OnYanYunStart, funYanYunStart);
+
     }
 
     public static void SwitchCanvas(State _state)
@@ -35,7 +58,8 @@ public class ServerCanvasCtr : MonoBehaviour
                 TurnOnOff(1);
                 break;
             case State.YanXunState:
-                TurnOnOff(2);
+                EventCenter.Broadcast(EventDefine.OnYanYunStart);
+
                 break;
             case State.QAState:
                 TurnOnOff(3);
@@ -60,8 +84,43 @@ public class ServerCanvasCtr : MonoBehaviour
         }
     }
 
+
     public void SetBtnInteractable(GameManager.characters cha)
     {
+
+        Debug.Log(cha.M_name);
         Characterbuttons[cha.id].interactable = !cha.isLocked;
+        Texture2D tempTexture2D = GameManager.PlayerName_PlayerInfo_KP[cha.M_name].TextureIDPhoto;
+        Characterbuttons[cha.id].GetComponent<Image>().sprite = GameManager.Texture2DtoSprite(tempTexture2D);
+
     }
+
+    public  void funYanYunStart() {
+        Debug.Log("服务器上显示训演开始UI");
+        TurnOnOff(2);
+        ServerYanYunState = YanYun.PlayerTakePhotoState;
+    }
+
+
+
+
+
+    //public void UpdateServerPhoto()
+    //{
+    //    Debug.Log("服务器更新图片");
+    //    int i = 0;
+
+    //    foreach (var key in GameManager.PlayerName_PlayerInfo_KP.Keys)
+    //    {
+    //        foreach (var img in testRawIamge)
+    //        {
+    //            if(img.name == key)
+    //            {
+    //                img.texture = GameManager.PlayerName_PlayerInfo_KP[key].TextureIDPhoto;
+    //            }
+    //        }
+    //    }
+
+    //}
+
 }

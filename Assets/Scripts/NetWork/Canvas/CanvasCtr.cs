@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class CanvasCtr : MonoBehaviour
 {
-
+    public Player Parentplayer;
 
     public List<GameObject> Sections = new List<GameObject>();
 
@@ -12,14 +12,24 @@ public class CanvasCtr : MonoBehaviour
 
     private void Awake()
     {
-      //  EventCenter.AddListener<State>(EventDefine.ChangeState, SwitchCanvas);
 
-     //   Debug.Log("addListener");
     }
 
-    private void OnDestroy()
+    public void RegisterClientGuiEvent()
     {
-       // EventCenter.RemoveListener<State>(EventDefine.ChangeState, SwitchCanvas);
+
+
+            Debug.Log("本地Player是Client 所以添加客户端事件");
+            EventCenter.AddListener(EventDefine.OnYanYunStart, funClientYanYunStart);
+
+    }
+
+    public void UnRegisterClientGuiEvent()
+    {
+        Debug.Log(Parentplayer.name);
+
+            EventCenter.RemoveListener(EventDefine.OnYanYunStart, funClientYanYunStart);
+
     }
 
 
@@ -34,7 +44,7 @@ public class CanvasCtr : MonoBehaviour
                 TurnOnOff(1);
                 break;
             case State.YanXunState:
-                TurnOnOff(2);
+                EventCenter.Broadcast(EventDefine.OnYanYunStart);
                 break;
             case State.QAState:
                 TurnOnOff(3);
@@ -60,6 +70,22 @@ public class CanvasCtr : MonoBehaviour
     }
 
 
+    public void funClientYanYunStart()
+    {
+
+        TurnOnOff(2);
+        for (int i = 0; i < GameManager.instance.syncCharacter.Count; i++)
+        {
+
+            GameManager.characters temp = GameManager.instance.syncCharacter[i];
+
+            temp.YanYunState = YanYun.PlayerTakePhotoState;
+
+            GameManager.instance.syncCharacter[i] = temp;
+        }
+
+
+    }
 
 
 

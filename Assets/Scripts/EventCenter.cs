@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class EventCenter
 {
-    private static Dictionary<EventDefine, Delegate> m_EventTable = new Dictionary<EventDefine, Delegate>();
+    public static Dictionary<EventDefine, Delegate> m_EventTable = new Dictionary<EventDefine, Delegate>();
 
     private static void OnListenerAdding(EventDefine EventDefine, Delegate callBack)
     {
